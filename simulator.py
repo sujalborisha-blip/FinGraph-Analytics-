@@ -4,6 +4,13 @@ import random
 from faker import Faker
 from datetime import datetime
 
+try:
+    from kafka import KafkaProducer
+    KAFKA_AVAILABLE = True
+except ImportError:
+    KAFKA_AVAILABLE = False
+    print("⚠️ 'kafka-python' library not found. Running in Console-Only mode.")
+
 # Initialize Faker to generate realistic fake data
 fake = Faker()
 
@@ -28,8 +35,21 @@ def generate_transaction(sender, receiver, amount=None):
     }
 
 def main():
-    print("🚀 Starting FinGraph Data Simulator v2 (With Fraud Syndicate)...\n")
+    print("🚀 Starting FinGraph Data Simulator v3 (With Kafka Streaming)...\n")
     
+    # Initialize Kafka Producer if available
+    producer = None
+    if KAFKA_AVAILABLE:
+        try:
+            producer = KafkaProducer(
+                bootstrap_servers=['localhost:9092'],
+                value_serializer=lambda v: json.dumps(v).encode('utf-8')
+            )
+            print("✅ Successfully connected to Kafka on localhost:9092")
+        except Exception as e:
+            print(f"⚠️ Could not connect to Kafka broker. Running in Console-Only mode.")
+            producer = None
+
     # 1. Create 100 Normal Accounts
     normal_accounts = [generate_account() for _ in range(100)]
     
@@ -44,22 +64,27 @@ def main():
         while True:
             # 80% chance of a normal transaction, 20% chance of a fraud transaction
             if random.random() < 0.8:
-                # Normal transaction between two random people
                 sender = random.choice(normal_accounts)
                 receiver = random.choice(normal_accounts)
                 if sender != receiver:
                     tx = generate_transaction(sender, receiver)
+                    tx["type"] = "NORMAL"
+                    if producer:
+                        producer.send('bank_transactions', value=tx)
                     print(json.dumps(tx))
             else:
-                # FRAUD "Smurfing" Transaction: Smurf sends exactly $9,900 to offshore account
-                # They send $9,900 to avoid the $10,000 bank alert limit
                 sender = random.choice(smurfs)
                 tx = generate_transaction(sender, offshore_account, amount=9900.00)
+                tx["type"] = "FRAUD_SMURFING"
+                if producer:
+                    producer.send('bank_transactions', value=tx)
                 print(f"[🚨 SUSPICIOUS] {json.dumps(tx)}")
                 
             time.sleep(1) # Wait 1 second
             
     except KeyboardInterrupt:
+        if producer:
+            producer.close()
         print("\n🛑 Simulator stopped.")
 
 if __name__ == "__main__":
