@@ -40,27 +40,36 @@ def generate_transaction(sender, receiver, amount=None):
 def load_or_generate_accounts():
     """Load existing accounts from file or generate new ones if file doesn't exist"""
     if os.path.exists(ACCOUNTS_FILE):
-        print(f"📦 Loading existing accounts from {ACCOUNTS_FILE}...")
         with open(ACCOUNTS_FILE, 'r') as f:
             data = json.load(f)
-            return data["normal_accounts"], data["offshore_account"], data["smurfs"]
+            # Check if 'mules' exist in old data, if so load them.
+            if "mules" in data:
+                print(f"📦 Loading existing accounts from {ACCOUNTS_FILE}...")
+                return data["normal_accounts"], data["offshore_account"], data["smurfs"], data["mules"]
+            else:
+                print("🔄 Updating accounts.json to include 'Mules' (Middlemen)...")
     
     print("🆕 Generating new accounts and saving to file...")
     normal_accounts = [generate_account() for _ in range(100)]
     offshore_account = generate_account(is_offshore=True)
     smurfs = random.sample(normal_accounts, 20)
     
+    # Select 5 accounts to act as Mules (middlemen) that are NOT smurfs
+    potential_mules = [acc for acc in normal_accounts if acc not in smurfs]
+    mules = random.sample(potential_mules, 5)
+    
     with open(ACCOUNTS_FILE, 'w') as f:
         json.dump({
             "normal_accounts": normal_accounts,
             "offshore_account": offshore_account,
-            "smurfs": smurfs
+            "smurfs": smurfs,
+            "mules": mules
         }, f, indent=4)
         
-    return normal_accounts, offshore_account, smurfs
+    return normal_accounts, offshore_account, smurfs, mules
 
 def main():
-    print("🚀 Starting FinGraph Data Simulator v4 (With Data Persistence)...\n")
+    print("🚀 Starting FinGraph Data Simulator v5 (Layering Fraud Pattern)...\n")
     
     # Initialize Kafka Producer if available
     producer = None
@@ -77,7 +86,7 @@ def main():
             producer = None
 
     # Load or generate our network of accounts
-    normal_accounts, offshore_account, smurfs = load_or_generate_accounts()
+    normal_accounts, offshore_account, smurfs, mules = load_or_generate_accounts()
     
     try:
         print(f"Streaming transactions... Logs will be saved to {LOG_FILE} (Press Ctrl+C to stop)\n")
@@ -96,14 +105,25 @@ def main():
                         log_file.write(json.dumps(tx) + "\n")
                         print(json.dumps(tx))
                 else:
+                    # MULTI-HOP LAYERING PATTERN (Smurf -> Mule -> Offshore)
                     sender = random.choice(smurfs)
-                    tx = generate_transaction(sender, offshore_account, amount=9900.00)
-                    tx["type"] = "FRAUD_SMURFING"
-                    if producer:
-                        producer.send('bank_transactions', value=tx)
+                    mule = random.choice(mules)
                     
-                    log_file.write(json.dumps(tx) + "\n")
-                    print(f"[🚨 SUSPICIOUS] {json.dumps(tx)}")
+                    # Hop 1: Smurf sends to Mule (Placement)
+                    tx1 = generate_transaction(sender, mule, amount=9900.00)
+                    tx1["type"] = "FRAUD_PLACEMENT"
+                    
+                    # Hop 2: Mule immediately sends to Offshore (Layering)
+                    tx2 = generate_transaction(mule, offshore_account, amount=9900.00)
+                    tx2["type"] = "FRAUD_LAYERING"
+                    
+                    # Send both transactions
+                    for tx in [tx1, tx2]:
+                        if producer:
+                            producer.send('bank_transactions', value=tx)
+                        
+                        log_file.write(json.dumps(tx) + "\n")
+                        print(f"[🚨 SUSPICIOUS] {json.dumps(tx)}")
                     
                 # Flush the file buffer so we don't lose data if script is stopped
                 log_file.flush()
