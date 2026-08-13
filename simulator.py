@@ -10,7 +10,7 @@ try:
     KAFKA_AVAILABLE = True
 except ImportError:
     KAFKA_AVAILABLE = False
-    print("⚠️ 'kafka-python' library not found. Running in Console-Only mode.")
+    print("Warning: 'kafka-python' library not found. Running in Console-Only mode.")
 
 # Initialize Faker to generate realistic fake data
 fake = Faker()
@@ -44,12 +44,12 @@ def load_or_generate_accounts():
             data = json.load(f)
             # Check if 'mules' exist in old data, if so load them.
             if "mules" in data:
-                print(f"📦 Loading existing accounts from {ACCOUNTS_FILE}...")
+                print(f"Loading existing accounts from {ACCOUNTS_FILE}...")
                 return data["normal_accounts"], data["offshore_account"], data["smurfs"], data["mules"]
             else:
-                print("🔄 Updating accounts.json to include 'Mules' (Middlemen)...")
+                print("Updating accounts.json to include 'Mules' (Middlemen)...")
     
-    print("🆕 Generating new accounts and saving to file...")
+    print("Generating new accounts and saving to file...")
     normal_accounts = [generate_account() for _ in range(100)]
     offshore_account = generate_account(is_offshore=True)
     smurfs = random.sample(normal_accounts, 20)
@@ -69,7 +69,7 @@ def load_or_generate_accounts():
     return normal_accounts, offshore_account, smurfs, mules
 
 def main():
-    print("🚀 Starting FinGraph Data Simulator v5 (Layering Fraud Pattern)...\n")
+    print("Starting FinGraph Data Simulator v5 (Layering Fraud Pattern)...\n")
     
     # Initialize Kafka Producer if available
     producer = None
@@ -80,9 +80,9 @@ def main():
                 value_serializer=lambda v: json.dumps(v).encode('utf-8'),
                 max_block_ms=2000 # Added 2-second timeout so it doesn't hang
             )
-            print("✅ Successfully connected to Kafka on localhost:9092")
+            print("Successfully connected to Kafka on localhost:9092")
         except Exception as e:
-            print(f"⚠️ Could not connect to Kafka broker. Running in Console-Only mode.")
+            print(f"Warning: Could not connect to Kafka broker. Running in Console-Only mode.")
             producer = None
 
     # Load or generate our network of accounts
@@ -123,7 +123,7 @@ def main():
                             producer.send('bank_transactions', value=tx)
                         
                         log_file.write(json.dumps(tx) + "\n")
-                        print(f"[🚨 SUSPICIOUS] {json.dumps(tx)}")
+                        print(f"[SUSPICIOUS] {json.dumps(tx)}")
                     
                 # Flush the file buffer so we don't lose data if script is stopped
                 log_file.flush()
@@ -132,7 +132,7 @@ def main():
     except KeyboardInterrupt:
         if producer:
             producer.close()
-        print("\n🛑 Simulator stopped.")
+        print("\nSimulator stopped.")
 
 if __name__ == "__main__":
     main()
