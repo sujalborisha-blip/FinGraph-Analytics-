@@ -21,9 +21,7 @@ class MockKafkaProducer:
         print("All messages flushed to Kafka.")
 
 def stream_data():
-    print("==================================================")
-    print("FinGraph Real-Time Kafka Streaming Engine")
-    print("==================================================")
+    print("--- FinGraph Real-Time Kafka Streaming Engine (DAEMON MODE) ---")
     
     log_file = "transactions.log"
     if not os.path.exists(log_file):
@@ -33,29 +31,31 @@ def stream_data():
     producer = MockKafkaProducer(bootstrap_servers='localhost:9092')
     kafka_topic = "fingraph_transactions_stream"
     
-    print(f"Starting stream from {log_file} to Kafka topic '{kafka_topic}'...\n")
+    print(f"Starting UNBREAKABLE stream from {log_file} to '{kafka_topic}'...")
+    print("Waiting for new transactions... (Press Ctrl+C to stop)\n")
     
-    count = 0
     try:
         with open(log_file, 'r') as f:
-            for line in f:
+            # Go to the end of the file to only stream NEW transactions
+            f.seek(0, os.SEEK_END)
+            
+            while True:
+                line = f.readline()
+                if not line:
+                    time.sleep(0.5) # Wait briefly for new data to be written by simulator
+                    continue
+                
                 line = line.strip()
                 if not line:
                     continue
                 
                 message_bytes = line.encode('utf-8')
                 producer.send(kafka_topic, value=message_bytes)
-                count += 1
                 
-                if count >= 25:
-                    break
-                    
+    except KeyboardInterrupt:
         print("\nFlushing remaining messages in queue...")
         producer.flush()
-        print(f"Successfully streamed {count} transactions to Apache Kafka!")
-        
-    except KeyboardInterrupt:
-        print("\nStreaming stopped by user.")
+        print("Streaming stopped by user.")
 
 if __name__ == "__main__":
     stream_data()

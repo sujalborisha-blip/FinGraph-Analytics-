@@ -34,13 +34,10 @@ def main():
             except json.JSONDecodeError:
                 continue 
                 
-    print("==================================================")
-    print("WEEK 2: SYNDICATE FRAUD ANALYSIS REPORT")
-    print("==================================================")
+    print("\n--- WEEK 2: SYNDICATE FRAUD ANALYSIS REPORT ---")
     print(f"Total Transactions Processed: {total_tx:,}")
     print(f"Total Fraudulent Transactions: {total_fraud_tx:,}")
-    print(f"Total Fraud Money Laundered: ${total_fraud_amount:,.2f}")
-    print("==================================================\n")
+    print(f"Total Fraud Money Laundered: ${total_fraud_amount:,.2f}\n")
     
     if total_tx > 0 and total_fraud_tx > 0:
         fraud_percentage = (total_fraud_tx / total_tx) * 100
