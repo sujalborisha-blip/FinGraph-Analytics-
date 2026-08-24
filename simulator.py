@@ -109,12 +109,15 @@ def main():
                     sender = random.choice(smurfs)
                     mule = random.choice(mules)
                     
+                    # Generate a random structuring amount between $9000 and $9999
+                    structuring_amount = round(random.uniform(9000.00, 9999.00), 2)
+                    
                     # Hop 1: Smurf sends to Mule (Placement)
-                    tx1 = generate_transaction(sender, mule, amount=9900.00)
+                    tx1 = generate_transaction(sender, mule, amount=structuring_amount)
                     tx1["type"] = "FRAUD_PLACEMENT"
                     
                     # Hop 2: Mule immediately sends to Offshore (Layering)
-                    tx2 = generate_transaction(mule, offshore_account, amount=9900.00)
+                    tx2 = generate_transaction(mule, offshore_account, amount=structuring_amount)
                     tx2["type"] = "FRAUD_LAYERING"
                     
                     # Send both transactions

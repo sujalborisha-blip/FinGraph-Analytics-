@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinGraph Real-Time Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: white; margin: 0; padding: 20px; }
+        .dashboard-container { max-width: 1200px; margin: 0 auto; }
+        .theme-danger { background-color: #3a0000 !important; }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .status-badge { padding: 8px 15px; border-radius: 20px; font-weight: bold; }
+        .secure { background-color: #28a745; }
+        .critical { background-color: #dc3545; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+        .dashboard-grid { display: flex; gap: 20px; margin-top: 20px; }
+        section { background: #252525; padding: 20px; border-radius: 8px; flex: 1; border: 1px solid #333; height: 600px; overflow-y: auto; transition: background 0.5s; }
+        .tx-item { background: #1a1a1a; padding: 10px; margin-top: 5px; border-radius: 4px; font-family: monospace; font-size: 13px; border-left: 3px solid #28a745; }
+        .alert-item { background: #1a1a1a; padding: 15px; margin-top: 10px; border-left: 5px solid #dc3545; border-radius: 4px; }
+        .action-buttons { margin-top: 15px; }
+        button { padding: 8px 12px; margin-right: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-freeze { background-color: #007bff; color: white; }
+        .btn-freeze:hover { background-color: #0056b3; }
+        .btn-dismiss { background-color: #6c757d; color: white; }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #1e1e1e; }
+        ::-webkit-scrollbar-thumb { background: #555; border-radius: 4px; }
+    </style>
+</head>
+<body id="body">
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>FinGraph Live Stream (Final Build)</h1>
+            <div class="status-badge secure" id="status">Status: MONITORING STREAM...</div>
+        </header>
+        <main class="dashboard-grid">
+            <section id="tx-section">
+                <h2>Live Transactions (Kafka Stream)</h2>
+                <div id="tx-container"></div>
+            </section>
+            <section id="alert-section">
+                <h2>Real-Time Fraud Alerts (Rules Engine)</h2>
+                <div id="alerts-container">
+                    <p id="no-alerts" style="color: #888;">No suspicious activity detected yet...</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Connect to the Flask SSE backend
+        const evtSource = new EventSource("/stream");
+        
+        evtSource.onmessage = function(event) {
+            try {
+                const data = JSON.parse(event.data);
+                
+                // 1. Add to live transactions log
+                const txContainer = document.getElementById("tx-container");
+                const txDiv = document.createElement("div");
+                txDiv.className = "tx-item";
+                txDiv.innerHTML = `[${data.timestamp.substring(11, 19)}] ${data.sender_account} -> ${data.receiver_account} | <strong>$${data.amount}</strong> | ${data.type}`;
+                
+                // Keep only last 50 transactions on screen
+                txContainer.prepend(txDiv);
+                if(txContainer.children.length > 50) {
+                    txContainer.removeChild(txContainer.lastChild);
+                }
+
+                // 2. If it's a fraud transaction, raise alert!
+                if(data.type !== "NORMAL") {
+                    document.getElementById('no-alerts').style.display = 'none';
+                    document.getElementById('status').className = 'status-badge critical';
+                    document.getElementById('status').innerText = 'Status: CRITICAL - FRAUD DETECTED';
+                    document.getElementById('alert-section').classList.add('theme-danger');
+                    
+                    const alertContainer = document.getElementById("alerts-container");
+                    const alertId = "alert-" + Date.now();
+                    const alertDiv = document.createElement("div");
+                    alertDiv.className = "alert-item";
+                    alertDiv.id = alertId;
+                    alertDiv.innerHTML = `
+                        <strong>[FRAUD DETECTED]</strong> Pattern: ${data.type} <br/>
+                        Transaction ID: ${data.transaction_id} <br/>
+                        Amount: <strong>$${data.amount}</strong> <br/>
+                        <div class="action-buttons">
+                            <button class="btn-freeze" onclick="alert('Account Frozen Successfully! Money blocked.'); document.getElementById('${alertId}').style.opacity='0.5';">Freeze Account</button>
+                            <button class="btn-dismiss" onclick="document.getElementById('${alertId}').remove(); resetStatus();">Dismiss</button>
+                        </div>
+                    `;
+                    alertContainer.prepend(alertDiv);
+                }
+            } catch(e) {
+                console.error("Error parsing stream data:", e);
+            }
+        };
+
+        function resetStatus() {
+            if(document.getElementById("alerts-container").children.length <= 1) {
+                document.getElementById('status').className = 'status-badge secure';
+                document.getElementById('status').innerText = 'Status: MONITORING STREAM...';
+                document.getElementById('alert-section').classList.remove('theme-danger');
+                document.getElementById('no-alerts').style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

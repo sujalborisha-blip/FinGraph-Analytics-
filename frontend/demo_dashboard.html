@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinGraph AML Dashboard</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #121212; color: white; margin: 0; padding: 20px; }
+        .dashboard-container { max-width: 1000px; margin: 0 auto; }
+        .theme-alert { background-color: #1e1e1e; transition: background-color 0.5s; padding: 20px; border-radius: 10px; }
+        .theme-danger { background-color: #3a0000; }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .status-badge { padding: 8px 15px; border-radius: 20px; font-weight: bold; }
+        .secure { background-color: #28a745; }
+        .critical { background-color: #dc3545; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
+        .dashboard-grid { display: flex; gap: 20px; margin-top: 20px; }
+        section { background: #252525; padding: 20px; border-radius: 8px; flex: 1; border: 1px solid #333; }
+        .alert-item { background: #1a1a1a; padding: 15px; margin-top: 10px; border-left: 5px solid #dc3545; border-radius: 4px; }
+        .action-buttons { margin-top: 15px; }
+        button { padding: 8px 12px; margin-right: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-freeze { background-color: #007bff; color: white; }
+        .btn-freeze:hover { background-color: #0056b3; }
+        .btn-dismiss { background-color: #6c757d; color: white; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container" id="app">
+        <header class="dashboard-header">
+            <h1>FinGraph AML Dashboard</h1>
+            <div class="status-badge secure" id="status">Status: SECURE</div>
+        </header>
+        <main class="dashboard-grid">
+            <section>
+                <h2>Live Graph Database (Neo4j)</h2>
+                <p>Graph Network Visualization Active... Monitoring transactions.</p>
+                <div id="graph-alert" style="display:none; color: #ff6b6b; font-weight: bold; margin-top: 20px; padding: 10px; border: 1px dashed #ff6b6b;">
+                     Anomalous Node Cluster Identified!
+                </div>
+            </section>
+            <section>
+                <h2>Real-Time Security Alerts</h2>
+                <div id="alerts-container">
+                    <p id="no-alerts">No suspicious activity detected in the stream.</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Simulate real-time fraud detection after 4 seconds
+        setTimeout(() => {
+            document.getElementById('app').classList.add('theme-danger');
+            document.getElementById('status').className = 'status-badge critical';
+            document.getElementById('status').innerText = 'Status: CRITICAL - SYNDICATE DETECTED';
+            document.getElementById('graph-alert').style.display = 'block';
+            document.getElementById('no-alerts').style.display = 'none';
+            
+            document.getElementById('alerts-container').innerHTML += `
+                <div class="alert-item" id="alert-box">
+                    <strong>[ALERT]</strong> Pattern: FRAUD_LAYERING <br/>
+                    Amount: $9900.00 <br/>
+                    Time: ${new Date().toLocaleTimeString()} <br/>
+                    <div class="action-buttons">
+                        <button class="btn-freeze" onclick="alert('Success: Account Frozen! Funds have been blocked from moving offshore.')">Freeze Account</button>
+                        <button class="btn-dismiss" onclick="document.getElementById('alert-box').style.display='none'">Dismiss</button>
+                    </div>
+                </div>
+            `;
+        }, 4000);
+    </script>
+</body>
+</html>
