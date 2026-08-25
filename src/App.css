@@ -1,0 +1,90 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #f4f6f8;
+}
+
+.dashboard {
+  min-height: 100vh;
+}
+
+.dashboard-header {
+  background: #17202a;
+  color: white;
+  padding: 20px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dashboard-header h1 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.dashboard-header p {
+  margin: 5px 0 0;
+  color: #bdc3c7;
+}
+
+.connection-status {
+  background: #1e8449;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+}
+
+.dashboard-content {
+  padding: 30px;
+}
+
+.dashboard-title {
+  margin-bottom: 20px;
+}
+
+.dashboard-title h2 {
+  margin-bottom: 5px;
+}
+
+.dashboard-title p {
+  color: #666;
+}
+
+.graph-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.graph-toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.graph-toolbar button {
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #2c3e50;
+  color: white;
+  font-size: 14px;
+}
+
+.graph-toolbar button:hover {
+  opacity: 0.85;
+}
+
+.graph-status {
+  margin-bottom: 10px;
+  color: #555;
+  font-size: 14px;
+}
+
+.graph-container {
+  height: 500px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
