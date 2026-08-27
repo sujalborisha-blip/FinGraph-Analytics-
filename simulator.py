@@ -22,7 +22,7 @@ def generate_account(is_offshore=False):
     return {
         "account_id": fake.bban(),
         "owner_name": fake.company() if is_offshore else fake.name(),
-        "bank_name": random.choice(["Chase", "Bank of America", "Wells Fargo", "CitiBank", "HSBC"]),
+        "bank_name": random.choice(["Chase", "Bank of America", "Wells Fargo", "CitiBank", "HSBC", "Barclays", "Deutsche Bank", "Standard Chartered"]),
         "country": "Panama" if is_offshore else "USA"
     }
 
