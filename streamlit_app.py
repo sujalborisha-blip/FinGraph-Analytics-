@@ -99,47 +99,51 @@ def load_all_data():
         # Determine classification
         if acc_id == offshore_id:
             role = "OFFSHORE_SHELL"
-            label = "👑 Panama Shell Entity"
-            bank = offshore.get("bank_name", "Offshore Bank")
+            label = "👑 PANAMA SHELL (HQ)"
+            bank = offshore.get("bank_name", "Offshore Private Bank")
             country = offshore.get("country", "Panama")
-            owner = offshore.get("owner_name", "Shell Corp")
-            color = {"background": "#ef4444", "border": "#f87171", "highlight": {"background": "#dc2626", "border": "#ffffff"}}
-            size = 36
-            shape = "diamond"
-            risk_score = 98
+            owner = offshore.get("owner_name", "TKNE Shell Corp")
+            color = {"background": "#e11d48", "border": "#f43f5e", "highlight": {"background": "#be123c", "border": "#ffffff"}}
+            size = 42
+            shape = "star"
+            risk_score = 99
+            font = {"color": "#ffffff", "size": 13, "bold": True, "strokeWidth": 3, "strokeColor": "#020617"}
         elif acc_id in mules_map:
             role = "MONEY_MULE"
-            label = f"⚠️ Mule: {acc_id[:6]}"
+            label = f"⚠️ Mule {acc_id[:6]}"
             acc_info = mules_map[acc_id]
-            bank = acc_info.get("bank_name", "US Bank")
+            bank = acc_info.get("bank_name", "Tier-1 Commercial")
             country = acc_info.get("country", "USA")
-            owner = acc_info.get("owner_name", "Unknown Mule")
-            color = {"background": "#f59e0b", "border": "#fbbf24", "highlight": {"background": "#d97706", "border": "#ffffff"}}
-            size = 28
+            owner = acc_info.get("owner_name", "Mule Account")
+            color = {"background": "#d97706", "border": "#f59e0b", "highlight": {"background": "#b45309", "border": "#ffffff"}}
+            size = 30
             shape = "hexagon"
             risk_score = 88
+            font = {"color": "#fef3c7", "size": 11, "bold": True, "strokeWidth": 3, "strokeColor": "#020617"}
         elif acc_id in smurfs_map:
             role = "SMURF_FEEDER"
-            label = f"🟣 Smurf: {acc_id[:6]}"
+            label = f"🟣 Smurf {acc_id[:6]}"
             acc_info = smurfs_map[acc_id]
-            bank = acc_info.get("bank_name", "Retail Bank")
+            bank = acc_info.get("bank_name", "Digital NeoBank")
             country = acc_info.get("country", "USA")
-            owner = acc_info.get("owner_name", "Smurf Account")
-            color = {"background": "#8b5cf6", "border": "#a78bfa", "highlight": {"background": "#7c3aed", "border": "#ffffff"}}
+            owner = acc_info.get("owner_name", "Feeder Account")
+            color = {"background": "#7c3aed", "border": "#a855f7", "highlight": {"background": "#6d28d9", "border": "#ffffff"}}
             size = 20
             shape = "dot"
-            risk_score = 74
+            risk_score = 75
+            font = {"color": "#f3e8ff", "size": 10, "strokeWidth": 2, "strokeColor": "#020617"}
         else:
             role = "STANDARD_RETAIL"
             label = f"{acc_id[:6]}"
             acc_info = normal_map.get(acc_id, {})
-            bank = acc_info.get("bank_name", "Domestic Bank")
+            bank = acc_info.get("bank_name", "Domestic Retail")
             country = acc_info.get("country", "USA")
             owner = acc_info.get("owner_name", "Retail Client")
-            color = {"background": "#0284c7", "border": "#38bdf8", "highlight": {"background": "#0369a1", "border": "#ffffff"}}
+            color = {"background": "#0f172a", "border": "#0284c7", "highlight": {"background": "#0369a1", "border": "#ffffff"}}
             size = 14
             shape = "dot"
             risk_score = 8
+            font = {"color": "#64748b", "size": 9, "strokeWidth": 2, "strokeColor": "#020617"}
 
         nodes.append({
             "id": acc_id,
@@ -152,7 +156,7 @@ def load_all_data():
             "color": color,
             "size": size,
             "shape": shape,
-            "font": {"color": "#f8fafc", "size": 11, "face": "Inter"}
+            "font": font
         })
 
     # Aggregate edges to keep graph responsive and sharp
@@ -179,22 +183,27 @@ def load_all_data():
     edges = []
     for key, data in edges_map.items():
         if data["is_fraud"]:
-            edge_color = {"color": "#ef4444", "highlight": "#ff3366", "opacity": 0.9}
-            width = 2.4
+            edge_color = {"color": "#ef4444", "highlight": "#ff0055", "hover": "#ff0055", "opacity": 0.95}
+            width = 3.0
             dashes = True
+            shadow = {"enabled": True, "color": "rgba(239, 68, 68, 0.4)", "size": 5}
+            arrows = {"to": {"enabled": True, "scaleFactor": 1.0}}
         else:
-            edge_color = {"color": "rgba(56, 189, 248, 0.28)", "highlight": "#00f2fe", "opacity": 0.4}
-            width = 1.0
+            edge_color = {"color": "rgba(56, 189, 248, 0.22)", "highlight": "#38bdf8", "hover": "#38bdf8", "opacity": 0.25}
+            width = 0.9
             dashes = False
+            shadow = False
+            arrows = {"to": {"enabled": True, "scaleFactor": 0.5}}
 
         types_str = ", ".join(data["types"])
         edges.append({
             "from": data["from"],
             "to": data["to"],
-            "arrows": {"to": {"enabled": True, "scaleFactor": 0.8}},
+            "arrows": arrows,
             "color": edge_color,
             "width": width,
             "dashes": dashes,
+            "shadow": shadow,
             "is_fraud": data["is_fraud"],
             "title": f"Count: {data['count']} txs | Total: ${data['amount']:,.2f} | Types: {types_str}",
             "amount": data["amount"],
@@ -321,27 +330,30 @@ if nav == "🌐 Interactive 3D Force Graph (Palantir Console)":
         <!-- Top Graph Interactive Toolbar -->
         <div class="h-11 glass-bar px-4 flex items-center justify-between shrink-0 z-20 border-b border-slate-800">
             <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5">
-                    <span class="h-2.5 w-2.5 rounded-full bg-cyan-400 animate-ping"></span>
+                <span class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 mr-1">
+                    <span class="h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
                     Graph Topology:
                 </span>
-                <button onclick="filterNetwork('all')" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition">
-                    🌐 Full Network (150 Nodes)
+                <button id="btn-fraud" onclick="filterNetwork('fraud_only')" class="px-3 py-1 rounded-md text-[11px] font-black bg-rose-600 text-white shadow-lg shadow-rose-600/40 border border-rose-400 transition cursor-pointer flex items-center gap-1">
+                    <span>🚨 Fraud Syndicate Ring (36 Nodes)</span>
                 </button>
-                <button onclick="filterNetwork('fraud_only')" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-rose-950/80 hover:bg-rose-900 text-rose-300 border border-rose-700/60 transition">
-                    🚨 Fraud Laundering Rings Only
+                <button id="btn-all" onclick="filterNetwork('all')" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition cursor-pointer flex items-center gap-1">
+                    <span>🌐 Full Banking Network (150 Nodes)</span>
                 </button>
-                <button onclick="focusOffshore()" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-700/60 transition">
-                    👑 Focus Offshore Shell (Panama)
+                <button onclick="focusOffshore()" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-700/60 transition cursor-pointer flex items-center gap-1">
+                    <span>👑 Focus Panama Shell</span>
+                </button>
+                <button onclick="resetCamera()" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-gray-300 border border-slate-700 transition cursor-pointer flex items-center gap-1">
+                    <span>🎯 Reset & Center View</span>
                 </button>
             </div>
 
             <div class="flex items-center gap-2 text-xs">
                 <span class="text-[10px] text-gray-400 font-mono">Legend:</span>
-                <span class="text-[9.5px] px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-700">👑 Offshore Haven</span>
-                <span class="text-[9.5px] px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700">⚠️ Money Mule</span>
-                <span class="text-[9.5px] px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-700">🟣 Smurf Account</span>
-                <span class="text-[9.5px] px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-700">🟢 Normal Customer</span>
+                <span class="text-[9.5px] px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-700 font-semibold">👑 Offshore Haven</span>
+                <span class="text-[9.5px] px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700 font-semibold">⚠️ Money Mule</span>
+                <span class="text-[9.5px] px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-700 font-semibold">🟣 Smurf Feeder</span>
+                <span class="text-[9.5px] px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-700 font-semibold">🟢 Normal Client</span>
             </div>
         </div>
 
@@ -422,9 +434,16 @@ if nav == "🌐 Interactive 3D Force Graph (Palantir Console)":
             const allEdges = {json.dumps(graph_edges)};
             const rawTxs = {json.dumps(raw_transactions[:150])};
 
-            let network;
-            let nodesDataSet = new vis.DataSet(allNodes);
-            let edgesDataSet = new vis.DataSet(allEdges);
+            // Pre-filter fraud entities
+            const fraudEdges = allEdges.filter(e => e.is_fraud);
+            const fraudNodeIds = new Set();
+            fraudEdges.forEach(e => {{ fraudNodeIds.add(e.from); fraudNodeIds.add(e.to); }});
+            const fraudNodes = allNodes.filter(n => fraudNodeIds.has(n.id));
+
+            let currentMode = 'fraud_only';
+            let network = null;
+            let nodesDataSet = new vis.DataSet(fraudNodes);
+            let edgesDataSet = new vis.DataSet(fraudEdges);
             let currentSelectedNodeId = null;
             let isStreaming = true;
             let streamInterval = null;
@@ -436,35 +455,135 @@ if nav == "🌐 Interactive 3D Force Graph (Palantir Console)":
 
                 const options = {{
                     physics: {{
-                        solver: 'forceAtlas2Based',
-                        forceAtlas2Based: {{
-                            gravitationalConstant: -45,
-                            centralGravity: 0.015,
-                            springLength: 95,
-                            springConstant: 0.08,
-                            damping: 0.4
+                        solver: 'barnesHut',
+                        barnesHut: {{
+                            gravitationalConstant: -14000,
+                            centralGravity: 0.12,
+                            springLength: 160,
+                            springConstant: 0.035,
+                            damping: 0.22,
+                            avoidOverlap: 0.95
                         }},
-                        stabilization: {{ iterations: 120 }}
+                        stabilization: {{
+                            enabled: true,
+                            iterations: 150,
+                            fit: true
+                        }}
                     }},
                     interaction: {{
                         hover: true,
                         tooltipDelay: 100,
                         zoomView: true,
-                        dragView: true
+                        dragView: true,
+                        navigationButtons: true,
+                        keyboard: true
                     }},
                     edges: {{
-                        smooth: {{ type: 'continuous' }}
+                        smooth: {{ type: 'continuous', roundness: 0.2 }}
                     }}
                 }};
 
                 network = new vis.Network(container, data, options);
 
+                network.once('stabilizationIterationsDone', function() {{
+                    network.fit({{
+                        animation: {{ duration: 800, easingFunction: 'easeInOutQuad' }}
+                    }});
+                }});
+
                 network.on('click', function(params) {{
                     if (params.nodes.length > 0) {{
                         const nodeId = params.nodes[0];
                         showDossier(nodeId);
+                        network.focus(nodeId, {{
+                            scale: 1.35,
+                            animation: {{ duration: 600, easingFunction: 'easeInOutQuad' }}
+                        }});
                     }}
                 }});
+
+                window.addEventListener('resize', () => {{
+                    if (network) network.fit();
+                }});
+            }}
+
+            function filterNetwork(mode) {{
+                currentMode = mode;
+                const btnFraud = document.getElementById('btn-fraud');
+                const btnAll = document.getElementById('btn-all');
+
+                if (mode === 'fraud_only') {{
+                    btnFraud.className = "px-3 py-1 rounded-md text-[11px] font-black bg-rose-600 text-white shadow-lg shadow-rose-600/40 border border-rose-400 transition cursor-pointer flex items-center gap-1";
+                    btnAll.className = "px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition cursor-pointer flex items-center gap-1";
+
+                    nodesDataSet.clear();
+                    edgesDataSet.clear();
+                    nodesDataSet.add(fraudNodes);
+                    edgesDataSet.add(fraudEdges);
+
+                    network.setOptions({{
+                        physics: {{
+                            barnesHut: {{
+                                gravitationalConstant: -14000,
+                                springLength: 160,
+                                springConstant: 0.035
+                            }}
+                        }}
+                    }});
+
+                    setTimeout(() => {{
+                        network.fit({{ animation: {{ duration: 700, easingFunction: 'easeInOutQuad' }} }});
+                    }}, 100);
+                }} else if (mode === 'all') {{
+                    btnFraud.className = "px-3 py-1 rounded-md text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-rose-300 border border-slate-700 transition cursor-pointer flex items-center gap-1";
+                    btnAll.className = "px-2.5 py-1 rounded-md text-[11px] font-black bg-cyan-600 text-white shadow-lg shadow-cyan-600/40 border border-cyan-400 transition cursor-pointer flex items-center gap-1";
+
+                    nodesDataSet.clear();
+                    edgesDataSet.clear();
+                    nodesDataSet.add(allNodes);
+
+                    // Normal edges have physics: false so they do not crush the layout
+                    const optimizedEdges = allEdges.map(e => {{
+                        if (!e.is_fraud) {{
+                            return Object.assign({{}}, e, {{ physics: false }});
+                        }}
+                        return e;
+                    }});
+                    edgesDataSet.add(optimizedEdges);
+
+                    network.setOptions({{
+                        physics: {{
+                            barnesHut: {{
+                                gravitationalConstant: -28000,
+                                springLength: 180,
+                                springConstant: 0.015
+                            }}
+                        }}
+                    }});
+
+                    setTimeout(() => {{
+                        network.fit({{ animation: {{ duration: 800, easingFunction: 'easeInOutQuad' }} }});
+                    }}, 150);
+                }}
+            }}
+
+            function resetCamera() {{
+                if (network) {{
+                    network.fit({{
+                        animation: {{ duration: 700, easingFunction: 'easeInOutQuad' }}
+                    }});
+                }}
+            }}
+
+            function focusOffshore() {{
+                const offshoreNode = allNodes.find(n => n.role === 'OFFSHORE_SHELL');
+                if (offshoreNode && network) {{
+                    network.focus(offshoreNode.id, {{
+                        scale: 1.6,
+                        animation: {{ duration: 1000, easingFunction: 'easeInOutQuad' }}
+                    }});
+                    showDossier(offshoreNode.id);
+                }}
             }}
 
             function showDossier(nodeId) {{
@@ -519,38 +638,6 @@ if nav == "🌐 Interactive 3D Force Graph (Palantir Console)":
                     color: {{ background: '#06b6d4', border: '#22d3ee', highlight: {{ background: '#0891b2', border: '#ffffff' }} }},
                     label: `❄️ FROZEN (${{currentSelectedNodeId.substring(0, 6)}})`
                 }});
-            }}
-
-            function filterNetwork(mode) {{
-                if (mode === 'all') {{
-                    nodesDataSet.clear();
-                    edgesDataSet.clear();
-                    nodesDataSet.add(allNodes);
-                    edgesDataSet.add(allEdges);
-                    network.fit({{ animation: true }});
-                }} else if (mode === 'fraud_only') {{
-                    const fraudEdges = allEdges.filter(e => e.is_fraud);
-                    const fraudNodeIds = new Set();
-                    fraudEdges.forEach(e => {{ fraudNodeIds.add(e.from); fraudNodeIds.add(e.to); }});
-                    const fraudNodes = allNodes.filter(n => fraudNodeIds.has(n.id));
-
-                    nodesDataSet.clear();
-                    edgesDataSet.clear();
-                    nodesDataSet.add(fraudNodes);
-                    edgesDataSet.add(fraudEdges);
-                    network.fit({{ animation: true }});
-                }}
-            }}
-
-            function focusOffshore() {{
-                const offshoreNode = allNodes.find(n => n.role === 'OFFSHORE_SHELL');
-                if (offshoreNode) {{
-                    network.focus(offshoreNode.id, {{
-                        scale: 1.6,
-                        animation: {{ duration: 1000, easingFunction: 'easeInOutQuad' }}
-                    }});
-                    showDossier(offshoreNode.id);
-                }}
             }}
 
             function startLiveTicker() {{
