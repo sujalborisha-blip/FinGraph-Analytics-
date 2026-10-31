@@ -27,6 +27,13 @@ ACCOUNTS_FILE = BASE_DIR / "accounts.json"
 # Custom Cyber-Dark Styling
 st.markdown("""
 <style>
+    .block-container {
+        padding-top: 1.2rem;
+        padding-bottom: 0.5rem;
+        padding-left: 2rem;
+        padding-right: 2rem;
+        max-width: 100%;
+    }
     .stApp {
         background-color: #030712;
         color: #f1f5f9;
@@ -299,133 +306,169 @@ if nav == "🌐 Interactive 3D Force Graph (Palantir Console)":
         <script type="text/javascript" src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
         <style>
-            * {{ box-sizing: border-box; }}
-            body {{
+            * {{
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }}
+            html, body {{
+                width: 100%;
+                height: 100%;
                 margin: 0;
                 padding: 0;
                 background: #030712;
                 color: #f1f5f9;
                 font-family: 'Inter', sans-serif;
                 overflow: hidden;
-                width: 100vw;
-                height: 100vh;
             }}
-            #network {{
+            #app-root {{
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                display: flex;
+                flex-direction: column;
                 width: 100%;
                 height: 100%;
-                background: radial-gradient(circle at 50% 50%, #0a1128 0%, #020617 100%);
+                overflow: hidden;
             }}
             .glass-bar {{
-                background: rgba(10, 16, 32, 0.92);
+                background: rgba(10, 16, 32, 0.95);
                 backdrop-filter: blur(14px);
-                border: 1px solid rgba(56, 189, 248, 0.2);
+                border-color: rgba(56, 189, 248, 0.2);
+            }}
+            #main-workspace {{
+                flex: 1 1 0%;
+                height: calc(100% - 88px);
+                width: 100%;
+                display: flex;
+                position: relative;
+                overflow: hidden;
+            }}
+            #network {{
+                flex: 1 1 0%;
+                width: 100%;
+                height: 100%;
+                min-height: 100%;
+                background: radial-gradient(circle at 50% 50%, #0a1128 0%, #020617 100%);
+            }}
+            #dossier-panel {{
+                width: 320px;
+                min-width: 320px;
+                height: 100%;
+                flex-shrink: 0;
+                overflow-y: auto;
             }}
             ::-webkit-scrollbar {{ width: 4px; }}
             ::-webkit-scrollbar-track {{ background: #030712; }}
             ::-webkit-scrollbar-thumb {{ background: #1e293b; border-radius: 2px; }}
         </style>
     </head>
-    <body class="flex flex-col h-full w-full relative">
+    <body>
+        <div id="app-root">
 
-        <!-- Top Graph Interactive Toolbar -->
-        <div class="h-11 glass-bar px-4 flex items-center justify-between shrink-0 z-20 border-b border-slate-800">
-            <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 mr-1">
-                    <span class="h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
-                    Graph Topology:
-                </span>
-                <button id="btn-fraud" onclick="filterNetwork('fraud_only')" class="px-3 py-1 rounded-md text-[11px] font-black bg-rose-600 text-white shadow-lg shadow-rose-600/40 border border-rose-400 transition cursor-pointer flex items-center gap-1">
-                    <span>🚨 Fraud Syndicate Ring (36 Nodes)</span>
-                </button>
-                <button id="btn-all" onclick="filterNetwork('all')" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition cursor-pointer flex items-center gap-1">
-                    <span>🌐 Full Banking Network (150 Nodes)</span>
-                </button>
-                <button onclick="focusOffshore()" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-700/60 transition cursor-pointer flex items-center gap-1">
-                    <span>👑 Focus Panama Shell</span>
-                </button>
-                <button onclick="resetCamera()" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-gray-300 border border-slate-700 transition cursor-pointer flex items-center gap-1">
-                    <span>🎯 Reset & Center View</span>
-                </button>
-            </div>
-
-            <div class="flex items-center gap-2 text-xs">
-                <span class="text-[10px] text-gray-400 font-mono">Legend:</span>
-                <span class="text-[9.5px] px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-700 font-semibold">👑 Offshore Haven</span>
-                <span class="text-[9.5px] px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700 font-semibold">⚠️ Money Mule</span>
-                <span class="text-[9.5px] px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-700 font-semibold">🟣 Smurf Feeder</span>
-                <span class="text-[9.5px] px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-700 font-semibold">🟢 Normal Client</span>
-            </div>
-        </div>
-
-        <!-- Main Workspace (Graph Canvas + Side Dossier Inspector) -->
-        <div class="flex-1 min-h-0 relative flex">
-
-            <!-- Graph Canvas -->
-            <div id="network" class="flex-1 h-full"></div>
-
-            <!-- Slide-in Account Dossier Panel -->
-            <div id="dossier-panel" class="w-80 h-full glass-bar border-l border-slate-800/90 p-4 flex flex-col gap-3 overflow-y-auto shrink-0 shadow-2xl transition-all duration-300">
-                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                    <span class="text-xs font-black uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
-                        <span>🔍 Account Dossier</span>
+            <!-- Top Graph Interactive Toolbar -->
+            <div class="h-11 glass-bar px-4 flex items-center justify-between shrink-0 z-20 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-white uppercase tracking-wider flex items-center gap-1.5 mr-1">
+                        <span class="h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
+                        Graph Topology:
                     </span>
-                    <span id="dossier-role-badge" class="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-800 text-gray-300 border border-slate-700 font-mono">SELECT NODE</span>
-                </div>
-
-                <div id="dossier-empty" class="text-center py-16 text-gray-500">
-                    <svg class="w-10 h-10 mx-auto mb-2 opacity-40 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
-                    <p class="text-xs">Click any node or transaction in the graph to inspect AML intelligence.</p>
-                </div>
-
-                <div id="dossier-content" class="hidden flex flex-col gap-3 text-xs">
-                    <div>
-                        <span class="text-[9px] text-gray-400 uppercase font-mono block">Account ID</span>
-                        <div id="dossier-id" class="text-sm font-black font-mono text-cyan-300 break-all"></div>
-                    </div>
-
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 space-y-1">
-                        <div><span class="text-gray-400 text-[10px]">Owner:</span> <strong id="dossier-owner" class="text-white"></strong></div>
-                        <div><span class="text-gray-400 text-[10px]">Bank:</span> <strong id="dossier-bank" class="text-white"></strong></div>
-                        <div><span class="text-gray-400 text-[10px]">Jurisdiction:</span> <strong id="dossier-country" class="text-emerald-400"></strong></div>
-                    </div>
-
-                    <!-- Risk Gauge Bar -->
-                    <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
-                        <div class="flex justify-between text-[10px] mb-1">
-                            <span class="text-gray-400 font-bold">Fraud Risk Index</span>
-                            <span id="dossier-risk-score" class="font-black text-rose-400 font-mono">98 / 100</span>
-                        </div>
-                        <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
-                            <div id="dossier-risk-bar" class="h-2 rounded-full bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500" style="width: 98%;"></div>
-                        </div>
-                        <span id="dossier-risk-level" class="text-[9px] font-bold text-rose-400 mt-1 block">CRITICAL REPUTATIONAL RISK</span>
-                    </div>
-
-                    <!-- Actions -->
-                    <button id="btn-freeze" onclick="freezeCurrentAccount()" class="w-full py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-cyan-600/30 transition flex items-center justify-center gap-1.5 cursor-pointer">
-                        <span>❄️ Freeze Account & Block Wire</span>
+                    <button id="btn-fraud" onclick="filterNetwork('fraud_only')" class="px-3 py-1 rounded-md text-[11px] font-black bg-rose-600 text-white shadow-lg shadow-rose-600/40 border border-rose-400 transition cursor-pointer flex items-center gap-1">
+                        <span>🚨 Fraud Syndicate Ring (36 Nodes)</span>
                     </button>
-                    <div id="freeze-confirm" class="hidden p-2 rounded-lg bg-emerald-950 border border-emerald-600 text-emerald-300 text-[10px] text-center font-bold">
-                        ✓ Account Frozen! Outbound transfers severed.
-                    </div>
+                    <button id="btn-all" onclick="filterNetwork('all')" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 transition cursor-pointer flex items-center gap-1">
+                        <span>🌐 Full Banking Network (150 Nodes)</span>
+                    </button>
+                    <button onclick="focusOffshore()" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-amber-950/80 hover:bg-amber-900 text-amber-300 border border-amber-700/60 transition cursor-pointer flex items-center gap-1">
+                        <span>👑 Focus Panama Shell</span>
+                    </button>
+                    <button onclick="resetCamera()" class="px-2.5 py-1 rounded-md text-[11px] font-bold bg-slate-800 hover:bg-slate-700 text-gray-300 border border-slate-700 transition cursor-pointer flex items-center gap-1">
+                        <span>🎯 Reset & Center View</span>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-2 text-xs">
+                    <span class="text-[10px] text-gray-400 font-mono">Legend:</span>
+                    <span class="text-[9.5px] px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-700 font-semibold">👑 Offshore Haven</span>
+                    <span class="text-[9.5px] px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700 font-semibold">⚠️ Money Mule</span>
+                    <span class="text-[9.5px] px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-700 font-semibold">🟣 Smurf Feeder</span>
+                    <span class="text-[9.5px] px-2 py-0.5 rounded bg-sky-950 text-sky-300 border border-sky-700 font-semibold">🟢 Normal Client</span>
                 </div>
             </div>
 
-        </div>
+            <!-- Main Workspace (Graph Canvas + Side Dossier Inspector) -->
+            <div id="main-workspace">
 
-        <!-- Bottom Live Transaction Stream Ticker -->
-        <div class="h-10 glass-bar px-4 flex items-center justify-between shrink-0 z-20 border-t border-slate-800 text-xs">
-            <div class="flex items-center gap-2 overflow-hidden">
-                <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700 font-mono text-[9.5px] font-bold">LIVE STREAM</span>
-                <span id="live-ticker-text" class="text-gray-300 font-mono text-[11px] truncate">
-                    Streaming Kafka events at 60 FPS...
-                </span>
+                <!-- Graph Canvas -->
+                <div id="network"></div>
+
+                <!-- Slide-in Account Dossier Panel -->
+                <div id="dossier-panel" class="glass-bar border-l border-slate-800/90 p-4 flex flex-col gap-3 shadow-2xl transition-all duration-300">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <span class="text-xs font-black uppercase tracking-wider text-cyan-300 flex items-center gap-1.5">
+                            <span>🔍 Account Dossier</span>
+                        </span>
+                        <span id="dossier-role-badge" class="text-[9px] font-bold px-2 py-0.5 rounded bg-slate-800 text-gray-300 border border-slate-700 font-mono">SELECT NODE</span>
+                    </div>
+
+                    <div id="dossier-empty" class="text-center py-16 text-gray-500">
+                        <svg class="w-10 h-10 mx-auto mb-2 opacity-40 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg>
+                        <p class="text-xs">Click any node or transaction in the graph to inspect AML intelligence.</p>
+                    </div>
+
+                    <div id="dossier-content" class="hidden flex flex-col gap-3 text-xs">
+                        <div>
+                            <span class="text-[9px] text-gray-400 uppercase font-mono block">Account ID</span>
+                            <div id="dossier-id" class="text-sm font-black font-mono text-cyan-300 break-all"></div>
+                        </div>
+
+                        <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 space-y-1">
+                            <div><span class="text-gray-400 text-[10px]">Owner:</span> <strong id="dossier-owner" class="text-white"></strong></div>
+                            <div><span class="text-gray-400 text-[10px]">Bank:</span> <strong id="dossier-bank" class="text-white"></strong></div>
+                            <div><span class="text-gray-400 text-[10px]">Jurisdiction:</span> <strong id="dossier-country" class="text-emerald-400"></strong></div>
+                        </div>
+
+                        <!-- Risk Gauge Bar -->
+                        <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800">
+                            <div class="flex justify-between text-[10px] mb-1">
+                                <span class="text-gray-400 font-bold">Fraud Risk Index</span>
+                                <span id="dossier-risk-score" class="font-black text-rose-400 font-mono">98 / 100</span>
+                            </div>
+                            <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden border border-slate-800">
+                                <div id="dossier-risk-bar" class="h-2 rounded-full bg-gradient-to-r from-emerald-500 via-amber-500 to-rose-500" style="width: 98%;"></div>
+                            </div>
+                            <span id="dossier-risk-level" class="text-[9px] font-bold text-rose-400 mt-1 block">CRITICAL REPUTATIONAL RISK</span>
+                        </div>
+
+                        <!-- Actions -->
+                        <button id="btn-freeze" onclick="freezeCurrentAccount()" class="w-full py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-cyan-600/30 transition flex items-center justify-center gap-1.5 cursor-pointer">
+                            <span>❄️ Freeze Account & Block Wire</span>
+                        </button>
+                        <div id="freeze-confirm" class="hidden p-2 rounded-lg bg-emerald-950 border border-emerald-600 text-emerald-300 text-[10px] text-center font-bold">
+                            ✓ Account Frozen! Outbound transfers severed.
+                        </div>
+                    </div>
+                </div>
+
             </div>
-            <div class="flex items-center gap-2">
-                <button onclick="toggleStream()" id="btn-stream-toggle" class="px-2.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[10px] font-bold border border-slate-700 transition">
-                    ⏸ Pause Stream
-                </button>
+
+            <!-- Bottom Live Transaction Stream Ticker -->
+            <div class="h-11 glass-bar px-4 flex items-center justify-between shrink-0 z-20 border-t border-slate-800 text-xs">
+                <div class="flex items-center gap-2 overflow-hidden">
+                    <span class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700 font-mono text-[9.5px] font-bold">LIVE STREAM</span>
+                    <span id="live-ticker-text" class="text-gray-300 font-mono text-[11px] truncate">
+                        Streaming Kafka events at 60 FPS...
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="toggleStream()" id="btn-stream-toggle" class="px-2.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 text-[10px] font-bold border border-slate-700 transition">
+                        ⏸ Pause Stream
+                    </button>
+                </div>
             </div>
+
         </div>
 
         <!-- Graph Execution Script -->
@@ -475,7 +518,7 @@ if nav == "🌐 Interactive 3D Force Graph (Palantir Console)":
                         tooltipDelay: 100,
                         zoomView: true,
                         dragView: true,
-                        navigationButtons: true,
+                        navigationButtons: false,
                         keyboard: true
                     }},
                     edges: {{
@@ -487,9 +530,16 @@ if nav == "🌐 Interactive 3D Force Graph (Palantir Console)":
 
                 network.once('stabilizationIterationsDone', function() {{
                     network.fit({{
-                        animation: {{ duration: 800, easingFunction: 'easeInOutQuad' }}
+                        animation: {{ duration: 700, easingFunction: 'easeInOutQuad' }}
                     }});
                 }});
+
+                setTimeout(() => {{
+                    if (network) {{
+                        network.redraw();
+                        network.fit();
+                    }}
+                }}, 250);
 
                 network.on('click', function(params) {{
                     if (params.nodes.length > 0) {{
