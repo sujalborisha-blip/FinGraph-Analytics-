@@ -1,0 +1,6 @@
+streamlit>=1.30.0
+pandas>=2.0.0
+networkx>=3.0
+flask>=3.0.0
+faker>=18.0.0
+matplotlib>=3.7.0
